@@ -1,0 +1,47 @@
+name: Deploy to s3
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-env:
+        description: 'Select an environment'
+        type: choice
+        options:
+          - stage
+          - production
+        required: true
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Selecting your source
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 3: Setting Environment variable like .env, Bucket Name and Distribution Link
+      - name: Set and Echo Variable
+        run: |
+          if [ "${{ inputs.deploy-env }}" = "stage" ]; then
+            echo "BUCKET_NAME=ww-stage-admin-portal" >> $GITHUB_ENV
+          elif [ "${{ inputs.deploy-env }}" = "production" ]; then
+            echo "BUCKET_NAME=ww-stage-admin-portal" >> $GITHUB_ENV
+          else
+            echo "Invalid input"
+            exit 1
+          fi
+        
+      # Step 6:  Authenticate to AWS 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ secrets.AWS_REGION_PROD }}
+          
+      # Step 7: Deploy to Bucket and Apply Invalidation to sync edge locations
+      - name: Deploy to Bucket
+        run: |
+          echo "Deploying to ${{ inputs.deploy-env }} environment, bucket: $BUCKET_NAME"
+          aws s3 sync dist/ s3://$BUCKET_NAME
+          echo "Deployed to ${{ inputs.deploy-env }} environment,updated bucket: $BUCKET_NAME"
