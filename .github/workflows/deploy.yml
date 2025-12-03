@@ -43,5 +43,5 @@ jobs:
       - name: Deploy to Bucket
         run: |
           echo "Deploying to ${{ inputs.deploy-env }} environment, bucket: $BUCKET_NAME"
-          aws s3 sync dist/ s3://$BUCKET_NAME
+          aws s3 sync . s3://$BUCKET_NAME
           echo "Deployed to ${{ inputs.deploy-env }} environment,updated bucket: $BUCKET_NAME"
